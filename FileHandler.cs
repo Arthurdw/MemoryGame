@@ -16,6 +16,8 @@ namespace Memory_Game
 
         private Image[] GetImagesFromFolder(string folder)
         {
+            if (folder == null) return null;
+
             List<Image> returnValues = new List<Image>();
 
             foreach (string file in Directory.GetFiles(folder))
@@ -41,7 +43,7 @@ namespace Memory_Game
                         return this.NoPathSelectedWarning();
 
                     default:
-                        return null;
+                        return this.NoPathSelectedWarning();
                 }
             }
         }

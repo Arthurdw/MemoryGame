@@ -9,13 +9,14 @@ namespace Memory_Game
     public partial class Form1 : Form
     {
         public FileHandler Fh { get; private set; }
-        public List<Image> LeftOver { get; private set; }
+        public List<Image> Field { get; private set; }
         public List<(int, int, Image)> Collected { get; private set; }
         public (int, int, Image) Latest { get; private set; }
         public bool AllowClick { get; private set; }
         public DateTime StartedAt { get; private set; }
         public DateTime TimeoutEnd { get; private set; }
-        public Random Rnd { get; private set; }
+        public int CouplesPerImage { get; private set; }
+        public int CouplesFound { get; private set; }
 
         public Form1()
         {
@@ -27,17 +28,22 @@ namespace Memory_Game
         {
             tlpData.BorderStyle = BorderStyle.FixedSingle;
             this.Collected = new List<(int, int, Image)>();
-            this.LeftOver = new List<Image>();
             this.Latest = (0, 0, null);
+            CouplesPerImage = 2;
         }
 
         private void gameconfigToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Fh = new FileHandler();
+
+            if (this.Fh.Images == null)
+            {
+                MessageBox.Show("No valid card source got selected!", "Oops...", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             this.Collected.Clear();
-            this.LeftOver = this.Fh.Images.ToList();
             this.InitializeFieldWithCurrentFileHandler();
-            this.Rnd = new Random(237456);
         }
 
         private void HandleCardClick(object sender, EventArgs e)
@@ -48,11 +54,10 @@ namespace Memory_Game
 
             if (trigger.BackgroundImage != null) return;
 
-            int index = this.Rnd.Next(this.LeftOver.Count);
-            trigger.BackgroundImage = this.LeftOver[index];
-
             int col = tlpData.GetPositionFromControl(trigger).Column;
             int row = tlpData.GetPositionFromControl(trigger).Row;
+
+            trigger.BackgroundImage = this.Field[(row * tlpData.ColumnCount) + col];
 
             if (this.Latest != (0, 0, null))
             {
@@ -61,7 +66,7 @@ namespace Memory_Game
                 {
                     this.Collected.Add((lCol, lRow, lImage));
                     this.Collected.Add((col, row, trigger.BackgroundImage));
-                    this.LeftOver.Remove(lImage);
+                    lblCount.Text = (++this.CouplesFound).ToString();
                 }
                 this.Latest = (0, 0, null);
                 this.TimeoutEnd = DateTime.Now.AddSeconds(1.5);
@@ -80,6 +85,14 @@ namespace Memory_Game
                 style.Width = tlpData.Width / columnCount;
             }
 
+            this.Field = new List<Image>(this.Fh.Images.ToList().Count);
+
+            for (int i = 0; i < this.CouplesPerImage; i++)
+                this.Field.AddRange(this.Fh.Images.ToList());
+
+            this.Field.Shuffle();
+            this.CouplesFound = 0;
+            lblCount.Text = 0.ToString();
             this.InitializePlayField(columnCount, rowCount);
             this.AllowClick = true;
             this.StartedAt = DateTime.Now;
@@ -105,7 +118,7 @@ namespace Memory_Game
         {
             tlpData.Controls.Clear();
 
-            for (int i = 0; i < this.Fh.Images.Length; i++)
+            for (int i = 0; i < this.Field.Count; i++)
             {
                 PictureBox ptb = new PictureBox
                 {
