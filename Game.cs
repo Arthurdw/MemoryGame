@@ -79,7 +79,6 @@ namespace Memory_Game
                     if (this.Collected.Count == this.Field.Count)
                     {
                         TimePassed.Stop();
-                        
                     }
                 }
                 else this.TimeoutEnd = DateTime.Now.AddSeconds(1.5);
@@ -156,7 +155,6 @@ namespace Memory_Game
             tlpData.Controls.Clear();
             for (int i = 0; i < (this.Field.Count + (hasMiddle ? 1 : 0)); i++)
             {
-
                 PictureBox ptb = new PictureBox
                 {
                     Dock = DockStyle.Fill,
@@ -177,7 +175,6 @@ namespace Memory_Game
                 tlpData.SetRow(ctrl, row);
             }
         }
-
 
         /// <summary>
         ///     Check if the current field contains a disabled middle cell.
