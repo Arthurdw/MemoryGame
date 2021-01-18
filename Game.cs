@@ -209,7 +209,10 @@ namespace Memory_Game
 
         private void TimePassed_Tick(object sender, EventArgs e)
         {
-            lblSec.Text = $@"{(DateTime.Now - this.StartedAt).Seconds} sec";
+            int seconds = (DateTime.Now - this.StartedAt).Seconds;
+            lblSec.Text = $@"{seconds} sec";
+            lblScore.Text = $@"{Math.Round((decimal) (this.CouplesFound == 0 ? 0 : seconds / this.CouplesFound), 0)} points";
+
             if (!this.AllowClick && this.TimeoutEnd < DateTime.Now)
             {
                 var (col, row) = this.GetColumnsAndRows();
