@@ -85,6 +85,12 @@ namespace Memory_Game
                 style.Width = tlpData.Width / columnCount;
             }
 
+            foreach (RowStyle style in tlpData.RowStyles)
+            {
+                style.SizeType = SizeType.Absolute;
+                style.Height = tlpData.Height / rowCount;
+            }
+
             this.Field = new List<Image>(this.Fh.Images.ToList().Count);
 
             for (int i = 0; i < this.CouplesPerImage; i++)
