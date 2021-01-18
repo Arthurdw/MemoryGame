@@ -56,8 +56,16 @@ namespace Memory_Game
 
             int col = tlpData.GetPositionFromControl(trigger).Column;
             int row = tlpData.GetPositionFromControl(trigger).Row;
+            int idx = (row * tlpData.ColumnCount) + col;
 
-            trigger.BackgroundImage = this.Field[(row * tlpData.ColumnCount) + col];
+            var (hasMiddle, middle) = this.GetMiddle();
+            if (hasMiddle)
+            {
+                if (idx == middle) return;
+                if (idx > middle) idx--;
+            }
+
+            trigger.BackgroundImage = this.Field[idx];
 
             if (this.Latest != (0, 0, null))
             {
@@ -67,9 +75,15 @@ namespace Memory_Game
                     this.Collected.Add((lCol, lRow, lImage));
                     this.Collected.Add((col, row, trigger.BackgroundImage));
                     lblCount.Text = (++this.CouplesFound).ToString();
+
+                    if (this.Collected.Count == this.Field.Count)
+                    {
+                        TimePassed.Stop();
+                        
+                    }
                 }
+                else this.TimeoutEnd = DateTime.Now.AddSeconds(1.5);
                 this.Latest = (0, 0, null);
-                this.TimeoutEnd = DateTime.Now.AddSeconds(1.5);
             }
             else this.Latest = (col, row, trigger.BackgroundImage);
         }
@@ -109,6 +123,21 @@ namespace Memory_Game
         {
             switch (this.Fh.Images.Length)
             {
+                case 2:
+                    return (2, 3);
+
+                case 3:
+                    return (2, 3);
+
+                case 4:
+                    return (3, 3);
+
+                case 6:
+                    return (3, 4);
+
+                case 7:
+                    return (3, 5);
+
                 case 8:
                     return (4, 4);
 
@@ -116,16 +145,18 @@ namespace Memory_Game
                     return (5, 4);
 
                 default:
-                    return (0, 0);
+                    return (5, 5);
             }
         }
 
         private void InitializePlayField(int columnCount, int rowCount)
         {
-            tlpData.Controls.Clear();
+            var (hasMiddle, _) = this.GetMiddle();
 
-            for (int i = 0; i < this.Field.Count; i++)
+            tlpData.Controls.Clear();
+            for (int i = 0; i < (this.Field.Count + (hasMiddle ? 1 : 0)); i++)
             {
+
                 PictureBox ptb = new PictureBox
                 {
                     Dock = DockStyle.Fill,
@@ -145,6 +176,38 @@ namespace Memory_Game
                 ctrl.BackgroundImage = image;
                 tlpData.SetRow(ctrl, row);
             }
+        }
+
+
+        /// <summary>
+        ///     Check if the current field contains a disabled middle cell.
+        /// </summary>
+        ///
+        /// <returns>
+        ///     If there is a disabled middle cell and if there is one its index.
+        /// </returns>
+        ///
+        /// <example>
+        /// <code>
+        ///     >>> GetMiddle();
+        ///     (true, 5)
+        ///     >>> GetMiddle();
+        ///     (false, -1)
+        /// </code>
+        /// </example>
+        private (bool, int) GetMiddle()
+        {
+            int middle = -1;
+            bool hasMiddle = false;
+            float count = (tlpData.ColumnCount * tlpData.RowCount) / 2f;
+
+            if (count % 1 != 0)
+            {
+                hasMiddle = true;
+                middle = (int)Math.Floor(count);
+            }
+
+            return (hasMiddle, middle);
         }
 
         private void TimePassed_Tick(object sender, EventArgs e)

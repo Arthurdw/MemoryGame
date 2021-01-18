@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Memory_Game
@@ -12,6 +13,8 @@ namespace Memory_Game
         public FileHandler()
         {
             this.Images = this.GetImagesFromFolder(GetFolderPath());
+            if (this.Images.Length > 12)
+                this.Images = this.Images.Take(12).ToArray();
         }
 
         private Image[] GetImagesFromFolder(string folder)
