@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using MySql.Data.MySqlClient;
 
 namespace Memory_Game
 {
@@ -18,6 +19,11 @@ namespace Memory_Game
         public int CouplesPerImage { get; private set; }
         public int CouplesFound { get; private set; }
 
+        private MySqlHandler _mySqlHandler;
+
+        private readonly string _username = "example";
+        private decimal _score;
+
         public Form1()
         {
             InitializeComponent();
@@ -30,6 +36,11 @@ namespace Memory_Game
             this.Collected = new List<(int, int, Image)>();
             this.Latest = (0, 0, null);
             CouplesPerImage = 2;
+            this._mySqlHandler = new MySqlHandler(MySqlClient.From(
+                "username",
+                "password",
+                "database",
+                "arthur.go-ao.be"));
         }
 
         private void gameconfigToolStripMenuItem_Click(object sender, EventArgs e)
@@ -79,7 +90,7 @@ namespace Memory_Game
                     if (this.Collected.Count == this.Field.Count)
                     {
                         TimePassed.Stop();
-                        new ScoreWindow(this.TakeScreenShot()).Show();
+                        new ScoreWindow(this.TakeScreenShot(), this._mySqlHandler, this._username, this._score).Show();
                     }
                 }
                 else this.TimeoutEnd = DateTime.Now.AddSeconds(1.5);
@@ -177,22 +188,6 @@ namespace Memory_Game
             }
         }
 
-        /// <summary>
-        ///     Check if the current field contains a disabled middle cell.
-        /// </summary>
-        ///
-        /// <returns>
-        ///     If there is a disabled middle cell and if there is one its index.
-        /// </returns>
-        ///
-        /// <example>
-        /// <code>
-        ///     >>> GetMiddle();
-        ///     (true, 5)
-        ///     >>> GetMiddle();
-        ///     (false, -1)
-        /// </code>
-        /// </example>
         private (bool, int) GetMiddle()
         {
             int middle = -1;
@@ -212,7 +207,8 @@ namespace Memory_Game
         {
             int seconds = (DateTime.Now - this.StartedAt).Seconds;
             lblSec.Text = $@"{seconds} sec";
-            lblScore.Text = $@"{Math.Round((decimal) (this.CouplesFound == 0 ? 0 : seconds / this.CouplesFound), 0)} points";
+            this._score = Math.Round((decimal)(this.CouplesFound == 0 ? 0 : seconds / this.CouplesFound), 0);
+            lblScore.Text = $@"{this._score} points";
 
             if (!this.AllowClick && this.TimeoutEnd < DateTime.Now)
             {
@@ -228,6 +224,19 @@ namespace Memory_Game
             Bitmap bm = new Bitmap(tlpData.Width, tlpData.Height);
             tlpData.DrawToBitmap(bm, new Rectangle(0, 0, bm.Width, bm.Height));
             return bm;
+        }
+
+        private void latestScoreToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this._mySqlHandler.Connection.Open();
+            MySqlCommand cmd = new MySqlCommand(SqlStatements.GetLatestUser, this._mySqlHandler.Connection);
+            MySqlDataReader rdr = cmd.ExecuteReader();
+            rdr.Read();
+            byte[] data = (byte[])rdr[0];
+            Image img = ImageHandler.BytesToImage(data);
+            rdr.Close();
+            this._mySqlHandler.Connection.Close();
+            new ImagePreview(img).Show();
         }
     }
 }
