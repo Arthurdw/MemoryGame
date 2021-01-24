@@ -79,6 +79,7 @@ namespace Memory_Game
                     if (this.Collected.Count == this.Field.Count)
                     {
                         TimePassed.Stop();
+                        new ScoreWindow(this.TakeScreenShot()).Show();
                     }
                 }
                 else this.TimeoutEnd = DateTime.Now.AddSeconds(1.5);
@@ -220,6 +221,13 @@ namespace Memory_Game
             }
 
             this.AllowClick = this.TimeoutEnd < DateTime.Now;
+        }
+
+        private Bitmap TakeScreenShot()
+        {
+            Bitmap bm = new Bitmap(tlpData.Width, tlpData.Height);
+            tlpData.DrawToBitmap(bm, new Rectangle(0, 0, bm.Width, bm.Height));
+            return bm;
         }
     }
 }
